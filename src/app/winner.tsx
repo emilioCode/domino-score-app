@@ -11,6 +11,7 @@ import {
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useRef } from "react";
+import * as Haptics from 'expo-haptics';
 import { useGameStore } from "../store/gameStore";
 import { theme } from "../constants/theme";
 
@@ -155,9 +156,10 @@ export default function WinnerScreen() {
     }
   }, []);
 
-  // Confetti
+  // Confetti + haptic de victoria
   useEffect(() => {
     if (!winnerId) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     let cancelled = false;
     const timers: ReturnType<typeof setTimeout>[] = [];

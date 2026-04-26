@@ -11,14 +11,15 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { useGame } from '@/hooks/useGame';
 import { theme } from '../constants/theme';
 import { POINT_OPTIONS } from '../constants/game';
 import type { Team } from '../types/game.types';
 
 export default function GameScreen() {
   const router = useRouter();
-  const { teams, rounds, targetScore, isFinished, addPoints, undoLastRound, updateRound } =
-    useGameStore();
+  const { teams, rounds, targetScore, isFinished } = useGameStore();
+  const { addPoints, undoLastRound, updateRound } = useGame();
 
   const teamA = teams[0];
   const teamB = teams[1];

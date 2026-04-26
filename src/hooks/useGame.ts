@@ -1,15 +1,36 @@
-import type { GameState } from '../types/game.types';
+import * as Haptics from 'expo-haptics';
+import { useGameStore } from '../store/gameStore';
 
-export interface UseGameReturn {
-  gameState: GameState | null;
-  addRound: (teamAPoints: number, teamBPoints: number) => void;
-  resetGame: () => void;
-  currentScores: { teamA: number; teamB: number };
-}
+export const useGame = () => {
+  const store = useGameStore();
 
-export const useGame = (): UseGameReturn => ({
-  gameState: null,
-  addRound: () => {},
-  resetGame: () => {},
-  currentScores: { teamA: 0, teamB: 0 },
-});
+  const addPoints = async (teamId: string, points: number) => {
+    store.addPoints(teamId, points);
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (store.checkWinner()) {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+  };
+
+  const undoLastRound = async () => {
+    store.undoLastRound();
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
+  };
+
+  const updateRound = async (
+    roundId: string,
+    teamAPoints: number,
+    teamBPoints: number,
+  ) => {
+    store.updateRound(roundId, teamAPoints, teamBPoints);
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+  };
+
+  const resetGame = () => {
+    store.resetGame();
+  };
+
+  return { addPoints, undoLastRound, updateRound, resetGame };
+};
+
+export default useGame;
