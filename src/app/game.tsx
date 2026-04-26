@@ -1,6 +1,7 @@
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
@@ -8,7 +9,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { theme } from '../constants/theme';
 import { POINT_OPTIONS } from '../constants/game';
@@ -40,6 +41,18 @@ export default function GameScreen() {
   };
 
   const scoreOf = (team: Team) => (team.id === teamA.id ? scoreA : scoreB);
+
+  const [custom, setCustom] = useState<Record<string, string>>({});
+  const getCustom = (teamId: string) => custom[teamId] ?? '';
+  const setTeamCustom = (teamId: string, val: string) =>
+    setCustom((prev) => ({ ...prev, [teamId]: val }));
+
+  const handleCustomPoints = (teamId: string) => {
+    const val = parseInt(getCustom(teamId), 10);
+    if (!val || val <= 0) return;
+    addPoints(teamId, val);
+    setTeamCustom(teamId, '');
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -133,6 +146,29 @@ export default function GameScreen() {
                   </Text>
                 </TouchableOpacity>
               ))}
+            </View>
+
+            {/* Input personalizado */}
+            <View style={[styles.customRow, { borderColor: team.color }]}>
+              <TextInput
+                style={styles.customInput}
+                value={getCustom(team.id)}
+                onChangeText={(val) =>
+                  setTeamCustom(team.id, val.replace(/[^0-9]/g, ''))
+                }
+                placeholder="Otro monto..."
+                placeholderTextColor={theme.colors.textSecondary}
+                keyboardType="number-pad"
+                returnKeyType="done"
+                onSubmitEditing={() => handleCustomPoints(team.id)}
+              />
+              <TouchableOpacity
+                style={[styles.customBtn, { backgroundColor: team.color }]}
+                onPress={() => handleCustomPoints(team.id)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.customBtnText}>+</Text>
+              </TouchableOpacity>
             </View>
           </View>
         ))}
@@ -376,5 +412,34 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     fontWeight: '700',
+  },
+
+  // Input personalizado
+  customRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.spacing.sm,
+    borderWidth: 1.5,
+    borderRadius: 10,
+    backgroundColor: theme.colors.surface,
+    overflow: 'hidden',
+  },
+  customInput: {
+    flex: 1,
+    color: theme.colors.textPrimary,
+    fontSize: theme.fontSize.md,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+  },
+  customBtn: {
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  customBtnText: {
+    color: theme.colors.background,
+    fontSize: theme.fontSize.lg,
+    fontWeight: 'bold',
   },
 });
