@@ -35,7 +35,7 @@ const CONFETTI_PIECES = [
 
 export default function WinnerScreen() {
   const router = useRouter();
-  const { teams, rounds, winnerId, resetGame } = useGameStore();
+  const { teams, rounds, winnerId, resetGame, undoLastRound } = useGameStore();
 
   const confettiAnims = useRef(
     CONFETTI_PIECES.map(() => new Animated.Value(0))
@@ -90,6 +90,11 @@ export default function WinnerScreen() {
   const handleNewGame = () => {
     resetGame();
     router.replace('/');
+  };
+
+  const handleCorrect = () => {
+    undoLastRound();
+    router.replace('/game');
   };
 
   return (
@@ -191,6 +196,14 @@ export default function WinnerScreen() {
           activeOpacity={0.8}
         >
           <Text style={styles.secondaryBtnText}>Ver Historial</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.correctBtn}
+          onPress={handleCorrect}
+          activeOpacity={0.6}
+        >
+          <Text style={styles.correctBtnText}>✏️  Corregir puntaje</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -326,5 +339,15 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     fontSize: theme.fontSize.md,
     fontWeight: '600',
+  },
+  correctBtn: {
+    marginTop: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    alignItems: 'center',
+  },
+  correctBtnText: {
+    color: theme.colors.textSecondary,
+    fontSize: theme.fontSize.sm,
+    opacity: 0.7,
   },
 });
