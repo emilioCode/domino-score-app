@@ -23,6 +23,7 @@ interface GameActions {
   undoLastRound: () => void;
   resetGame: () => void;
   checkWinner: () => Team | null;
+  updateRound: (roundId: string, teamAPoints: number, teamBPoints: number) => void;
 }
 
 export type GameStore = GameState & GameActions;
@@ -88,4 +89,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (scoreB >= targetScore) return teams[1];
     return null;
   },
+
+  updateRound: (roundId, teamAPoints, teamBPoints) =>
+    set((s) => {
+      const rounds =
+        teamAPoints === 0 && teamBPoints === 0
+          ? s.rounds.filter((r) => r.id !== roundId)
+          : s.rounds.map((r) =>
+              r.id === roundId ? { ...r, teamAPoints, teamBPoints } : r
+            );
+      const scoreA = sumScore(rounds, 'teamAPoints');
+      const scoreB = sumScore(rounds, 'teamBPoints');
+      const winnerId =
+        scoreA >= s.targetScore ? s.teams[0].id
+        : scoreB >= s.targetScore ? s.teams[1].id
+        : null;
+      return { rounds, isFinished: winnerId !== null, winnerId };
+    }),
 }));

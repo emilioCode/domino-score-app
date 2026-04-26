@@ -17,7 +17,7 @@ import type { Team } from '../types/game.types';
 
 export default function GameScreen() {
   const router = useRouter();
-  const { teams, rounds, targetScore, isFinished, addPoints, undoLastRound } =
+  const { teams, rounds, targetScore, isFinished, addPoints, undoLastRound, updateRound } =
     useGameStore();
 
   const teamA = teams[0];
@@ -41,6 +41,30 @@ export default function GameScreen() {
   };
 
   const scoreOf = (team: Team) => (team.id === teamA.id ? scoreA : scoreB);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editA, setEditA] = useState('');
+  const [editB, setEditB] = useState('');
+
+  useEffect(() => {
+    if (editingId && !rounds.find((r) => r.id === editingId)) {
+      setEditingId(null);
+    }
+  }, [rounds]);
+
+  const handleStartEdit = (roundId: string, curA: number, curB: number) => {
+    setEditingId(roundId);
+    setEditA(curA > 0 ? String(curA) : '');
+    setEditB(curB > 0 ? String(curB) : '');
+  };
+
+  const handleConfirmEdit = () => {
+    if (!editingId) return;
+    updateRound(editingId, parseInt(editA, 10) || 0, parseInt(editB, 10) || 0);
+    setEditingId(null);
+  };
+
+  const handleCancelEdit = () => setEditingId(null);
 
   const [custom, setCustom] = useState<Record<string, string>>({});
   const getCustom = (teamId: string) => custom[teamId] ?? '';
@@ -203,47 +227,98 @@ export default function GameScreen() {
             {[...rounds]
               .reverse()
               .slice(0, 5)
-              .map((round, idx) => (
-                <View
-                  key={round.id}
-                  style={[
-                    styles.historyRow,
-                    idx % 2 === 1 && styles.historyRowAlt,
-                  ]}
-                >
-                  <Text style={[styles.historyCell, styles.cellIndex]}>
-                    R{rounds.length - idx}
-                  </Text>
-                  <Text
+              .map((round, idx) => {
+                const roundNum = rounds.length - idx;
+                const isEditing = editingId === round.id;
+
+                if (isEditing) {
+                  return (
+                    <View key={round.id} style={styles.historyRowEditing}>
+                      <Text style={[styles.historyCell, styles.cellIndex]}>
+                        R{roundNum}
+                      </Text>
+                      <TextInput
+                        style={[styles.editInput, { borderColor: teamA.color }]}
+                        value={editA}
+                        onChangeText={(v) => setEditA(v.replace(/[^0-9]/g, ''))}
+                        keyboardType="number-pad"
+                        placeholder="0"
+                        placeholderTextColor={theme.colors.textSecondary}
+                        selectTextOnFocus
+                      />
+                      <TextInput
+                        style={[styles.editInput, { borderColor: teamB.color }]}
+                        value={editB}
+                        onChangeText={(v) => setEditB(v.replace(/[^0-9]/g, ''))}
+                        keyboardType="number-pad"
+                        placeholder="0"
+                        placeholderTextColor={theme.colors.textSecondary}
+                        selectTextOnFocus
+                      />
+                      <TouchableOpacity
+                        onPress={handleConfirmEdit}
+                        style={styles.editActionBtn}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.editConfirm}>✓</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={handleCancelEdit}
+                        style={styles.editActionBtn}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.editCancel}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                }
+
+                return (
+                  <TouchableOpacity
+                    key={round.id}
                     style={[
-                      styles.historyCell,
-                      styles.cellScore,
-                      {
-                        color:
-                          round.teamAPoints > 0
-                            ? teamA.color
-                            : theme.colors.textSecondary,
-                      },
+                      styles.historyRow,
+                      idx % 2 === 1 && styles.historyRowAlt,
                     ]}
+                    onPress={() =>
+                      handleStartEdit(round.id, round.teamAPoints, round.teamBPoints)
+                    }
+                    activeOpacity={0.7}
                   >
-                    {round.teamAPoints > 0 ? `+${round.teamAPoints}` : '—'}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.historyCell,
-                      styles.cellScore,
-                      {
-                        color:
-                          round.teamBPoints > 0
-                            ? teamB.color
-                            : theme.colors.textSecondary,
-                      },
-                    ]}
-                  >
-                    {round.teamBPoints > 0 ? `+${round.teamBPoints}` : '—'}
-                  </Text>
-                </View>
-              ))}
+                    <Text style={[styles.historyCell, styles.cellIndex]}>
+                      R{roundNum}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.historyCell,
+                        styles.cellScore,
+                        {
+                          color:
+                            round.teamAPoints > 0
+                              ? teamA.color
+                              : theme.colors.textSecondary,
+                        },
+                      ]}
+                    >
+                      {round.teamAPoints > 0 ? `+${round.teamAPoints}` : '—'}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.historyCell,
+                        styles.cellScore,
+                        {
+                          color:
+                            round.teamBPoints > 0
+                              ? teamB.color
+                              : theme.colors.textSecondary,
+                        },
+                      ]}
+                    >
+                      {round.teamBPoints > 0 ? `+${round.teamBPoints}` : '—'}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
           </View>
         )}
       </ScrollView>
@@ -411,6 +486,43 @@ const styles = StyleSheet.create({
   cellScore: {
     flex: 1,
     textAlign: 'center',
+    fontWeight: '700',
+  },
+
+  // Edición inline
+  historyRowEditing: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    backgroundColor: theme.colors.background,
+    gap: theme.spacing.xs,
+  },
+  editInput: {
+    flex: 1,
+    height: 34,
+    borderWidth: 1.5,
+    borderRadius: 6,
+    backgroundColor: theme.colors.surface,
+    color: theme.colors.textPrimary,
+    fontSize: theme.fontSize.sm,
+    textAlign: 'center',
+    paddingHorizontal: theme.spacing.xs,
+  },
+  editActionBtn: {
+    width: 32,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editConfirm: {
+    color: theme.colors.success,
+    fontSize: theme.fontSize.md,
+    fontWeight: '700',
+  },
+  editCancel: {
+    color: theme.colors.textSecondary,
+    fontSize: theme.fontSize.md,
     fontWeight: '700',
   },
 
