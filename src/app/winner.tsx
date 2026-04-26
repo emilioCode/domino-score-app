@@ -1,13 +1,330 @@
-import { View, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+  Dimensions,
+  ScrollView,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect, useRef } from 'react';
+import { useGameStore } from '../store/gameStore';
 import { theme } from '../constants/theme';
 
+const { width: W } = Dimensions.get('window');
+
+const CONFETTI_PIECES = [
+  { id: '1',  x: 0.05, size: 8,  color: theme.colors.accent,        delay: 0,   duration: 3200 },
+  { id: '2',  x: 0.13, size: 5,  color: theme.colors.teamA,         delay: 380, duration: 3600 },
+  { id: '3',  x: 0.22, size: 7,  color: theme.colors.teamB,         delay: 190, duration: 2900 },
+  { id: '4',  x: 0.31, size: 6,  color: theme.colors.textPrimary,   delay: 700, duration: 3300 },
+  { id: '5',  x: 0.41, size: 9,  color: theme.colors.accent,        delay: 90,  duration: 3700 },
+  { id: '6',  x: 0.50, size: 5,  color: theme.colors.teamA,         delay: 540, duration: 3000 },
+  { id: '7',  x: 0.59, size: 7,  color: theme.colors.teamB,         delay: 310, duration: 3400 },
+  { id: '8',  x: 0.68, size: 6,  color: theme.colors.accent,        delay: 860, duration: 3100 },
+  { id: '9',  x: 0.77, size: 8,  color: theme.colors.textPrimary,   delay: 140, duration: 2800 },
+  { id: '10', x: 0.86, size: 5,  color: theme.colors.teamA,         delay: 620, duration: 3500 },
+  { id: '11', x: 0.93, size: 7,  color: theme.colors.accent,        delay: 470, duration: 3200 },
+  { id: '12', x: 0.08, size: 6,  color: theme.colors.teamB,         delay: 950, duration: 3000 },
+  { id: '13', x: 0.36, size: 5,  color: theme.colors.accent,        delay: 250, duration: 3600 },
+  { id: '14', x: 0.54, size: 8,  color: theme.colors.teamA,         delay: 730, duration: 2900 },
+  { id: '15', x: 0.80, size: 6,  color: theme.colors.teamB,         delay: 500, duration: 3300 },
+].map((p) => ({ ...p, left: p.x * W }));
+
 export default function WinnerScreen() {
-  return <View style={styles.container} />;
+  const router = useRouter();
+  const { teams, rounds, winnerId, resetGame } = useGameStore();
+
+  const confettiAnims = useRef(
+    CONFETTI_PIECES.map(() => new Animated.Value(0))
+  ).current;
+
+  // Redirigir si no hay ganador
+  useEffect(() => {
+    if (!winnerId) {
+      router.replace('/');
+    }
+  }, []);
+
+  // Confetti
+  useEffect(() => {
+    if (!winnerId) return;
+
+    let cancelled = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    confettiAnims.forEach((anim, i) => {
+      const { delay, duration } = CONFETTI_PIECES[i];
+
+      const loop = () => {
+        if (cancelled) return;
+        anim.setValue(0);
+        Animated.timing(anim, {
+          toValue: 1,
+          duration,
+          useNativeDriver: true,
+        }).start(({ finished }) => {
+          if (finished) loop();
+        });
+      };
+
+      timers.push(setTimeout(loop, delay));
+    });
+
+    return () => {
+      cancelled = true;
+      timers.forEach(clearTimeout);
+      confettiAnims.forEach((a) => a.stopAnimation());
+    };
+  }, [winnerId]);
+
+  if (!winnerId) return null;
+
+  const winner = teams.find((t) => t.id === winnerId)!;
+  const scoreA = rounds.reduce((acc, r) => acc + r.teamAPoints, 0);
+  const scoreB = rounds.reduce((acc, r) => acc + r.teamBPoints, 0);
+  const winnerScore = winner.id === teams[0].id ? scoreA : scoreB;
+
+  const handleNewGame = () => {
+    resetGame();
+    router.replace('/');
+  };
+
+  return (
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      {/* Confetti layer */}
+      <View style={styles.confettiLayer} pointerEvents="none">
+        {CONFETTI_PIECES.map((piece, i) => {
+          const anim = confettiAnims[i];
+          const translateY = anim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [-piece.size, 900],
+          });
+          const opacity = anim.interpolate({
+            inputRange: [0, 0.78, 1],
+            outputRange: [1, 1, 0],
+          });
+          return (
+            <Animated.View
+              key={piece.id}
+              style={[
+                styles.confettiPiece,
+                {
+                  left: piece.left,
+                  width: piece.size,
+                  height: piece.size,
+                  borderRadius: piece.size / 2,
+                  backgroundColor: piece.color,
+                  transform: [{ translateY }],
+                  opacity,
+                },
+              ]}
+            />
+          );
+        })}
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Trofeo */}
+        <Text style={styles.trophy}>🏆</Text>
+        <Text style={styles.ganadorLabel}>¡Ganador!</Text>
+        <Text style={[styles.winnerName, { color: winner.color }]}>
+          {winner.name}
+        </Text>
+        <Text style={styles.winnerScore}>{winnerScore} puntos</Text>
+
+        {/* Separador dorado */}
+        <View style={styles.divider} />
+
+        {/* Resumen */}
+        <Text style={styles.roundsLabel}>
+          {rounds.length} {rounds.length === 1 ? 'ronda jugada' : 'rondas jugadas'}
+        </Text>
+
+        {/* Puntajes finales */}
+        <View style={styles.scoresRow}>
+          {teams.map((team) => {
+            const score = team.id === teams[0].id ? scoreA : scoreB;
+            const isWinner = team.id === winnerId;
+            return (
+              <View
+                key={team.id}
+                style={[styles.scoreBox, isWinner && styles.scoreBoxWinner]}
+              >
+                <Text
+                  style={[styles.scoreBoxName, { color: team.color }]}
+                  numberOfLines={1}
+                >
+                  {team.name}
+                </Text>
+                <Text
+                  style={[
+                    styles.scoreBoxValue,
+                    isWinner && styles.scoreBoxValueWinner,
+                  ]}
+                >
+                  {score}
+                </Text>
+                {isWinner && <Text style={styles.crownBadge}>👑</Text>}
+              </View>
+            );
+          })}
+        </View>
+
+        {/* Botones */}
+        <TouchableOpacity
+          style={styles.primaryBtn}
+          onPress={handleNewGame}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.primaryBtnText}>Nueva Partida</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.secondaryBtn}
+          onPress={() => router.push('/history')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.secondaryBtnText}>Ver Historial</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safe: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+
+  // Confetti
+  confettiLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  confettiPiece: {
+    position: 'absolute',
+    top: 0,
+  },
+
+  // Contenido
+  scroll: {
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing.xxl,
+    paddingBottom: theme.spacing.xxl,
+    zIndex: 1,
+  },
+  trophy: {
+    fontSize: 80,
+    marginBottom: theme.spacing.md,
+  },
+  ganadorLabel: {
+    color: theme.colors.textPrimary,
+    fontSize: theme.fontSize.lg,
+    fontWeight: '600',
+    marginBottom: theme.spacing.sm,
+  },
+  winnerName: {
+    fontSize: theme.fontSize.xxl,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  winnerScore: {
+    color: theme.colors.accent,
+    fontSize: theme.fontSize.xl,
+    fontWeight: '700',
+  },
+
+  // Separador
+  divider: {
+    width: 60,
+    height: 2,
+    backgroundColor: theme.colors.accent,
+    borderRadius: 1,
+    marginVertical: theme.spacing.xl,
+  },
+
+  // Resumen
+  roundsLabel: {
+    color: theme.colors.textSecondary,
+    fontSize: theme.fontSize.md,
+    marginBottom: theme.spacing.lg,
+  },
+
+  // Puntajes
+  scoresRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    width: '100%',
+    marginBottom: theme.spacing.xxl,
+  },
+  scoreBox: {
+    flex: 1,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.md,
+    alignItems: 'center',
+  },
+  scoreBoxWinner: {
+    borderColor: theme.colors.accent,
+  },
+  scoreBoxName: {
+    fontSize: theme.fontSize.xs,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: theme.spacing.xs,
+  },
+  scoreBoxValue: {
+    color: theme.colors.textSecondary,
+    fontSize: theme.fontSize.xl,
+    fontWeight: 'bold',
+  },
+  scoreBoxValueWinner: {
+    color: theme.colors.textPrimary,
+  },
+  crownBadge: {
+    fontSize: 14,
+    marginTop: theme.spacing.xs,
+  },
+
+  // Botones
+  primaryBtn: {
+    width: '100%',
+    backgroundColor: theme.colors.accent,
+    borderRadius: 12,
+    paddingVertical: theme.spacing.lg,
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  primaryBtnText: {
+    color: theme.colors.background,
+    fontSize: theme.fontSize.lg,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  secondaryBtn: {
+    width: '100%',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    paddingVertical: theme.spacing.lg,
+    alignItems: 'center',
+  },
+  secondaryBtnText: {
+    color: theme.colors.textSecondary,
+    fontSize: theme.fontSize.md,
+    fontWeight: '600',
   },
 });
