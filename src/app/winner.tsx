@@ -6,45 +6,152 @@ import {
   Animated,
   Dimensions,
   ScrollView,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEffect, useRef } from 'react';
-import { useGameStore } from '../store/gameStore';
-import { theme } from '../constants/theme';
+  Share,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useEffect, useRef } from "react";
+import { useGameStore } from "../store/gameStore";
+import { theme } from "../constants/theme";
 
-const { width: W } = Dimensions.get('window');
+const { width: W } = Dimensions.get("window");
 
 const CONFETTI_PIECES = [
-  { id: '1',  x: 0.05, size: 8,  color: theme.colors.accent,        delay: 0,   duration: 3200 },
-  { id: '2',  x: 0.13, size: 5,  color: theme.colors.teamA,         delay: 380, duration: 3600 },
-  { id: '3',  x: 0.22, size: 7,  color: theme.colors.teamB,         delay: 190, duration: 2900 },
-  { id: '4',  x: 0.31, size: 6,  color: theme.colors.textPrimary,   delay: 700, duration: 3300 },
-  { id: '5',  x: 0.41, size: 9,  color: theme.colors.accent,        delay: 90,  duration: 3700 },
-  { id: '6',  x: 0.50, size: 5,  color: theme.colors.teamA,         delay: 540, duration: 3000 },
-  { id: '7',  x: 0.59, size: 7,  color: theme.colors.teamB,         delay: 310, duration: 3400 },
-  { id: '8',  x: 0.68, size: 6,  color: theme.colors.accent,        delay: 860, duration: 3100 },
-  { id: '9',  x: 0.77, size: 8,  color: theme.colors.textPrimary,   delay: 140, duration: 2800 },
-  { id: '10', x: 0.86, size: 5,  color: theme.colors.teamA,         delay: 620, duration: 3500 },
-  { id: '11', x: 0.93, size: 7,  color: theme.colors.accent,        delay: 470, duration: 3200 },
-  { id: '12', x: 0.08, size: 6,  color: theme.colors.teamB,         delay: 950, duration: 3000 },
-  { id: '13', x: 0.36, size: 5,  color: theme.colors.accent,        delay: 250, duration: 3600 },
-  { id: '14', x: 0.54, size: 8,  color: theme.colors.teamA,         delay: 730, duration: 2900 },
-  { id: '15', x: 0.80, size: 6,  color: theme.colors.teamB,         delay: 500, duration: 3300 },
+  {
+    id: "1",
+    x: 0.05,
+    size: 8,
+    color: theme.colors.accent,
+    delay: 0,
+    duration: 3200,
+  },
+  {
+    id: "2",
+    x: 0.13,
+    size: 5,
+    color: theme.colors.teamA,
+    delay: 380,
+    duration: 3600,
+  },
+  {
+    id: "3",
+    x: 0.22,
+    size: 7,
+    color: theme.colors.teamB,
+    delay: 190,
+    duration: 2900,
+  },
+  {
+    id: "4",
+    x: 0.31,
+    size: 6,
+    color: theme.colors.textPrimary,
+    delay: 700,
+    duration: 3300,
+  },
+  {
+    id: "5",
+    x: 0.41,
+    size: 9,
+    color: theme.colors.accent,
+    delay: 90,
+    duration: 3700,
+  },
+  {
+    id: "6",
+    x: 0.5,
+    size: 5,
+    color: theme.colors.teamA,
+    delay: 540,
+    duration: 3000,
+  },
+  {
+    id: "7",
+    x: 0.59,
+    size: 7,
+    color: theme.colors.teamB,
+    delay: 310,
+    duration: 3400,
+  },
+  {
+    id: "8",
+    x: 0.68,
+    size: 6,
+    color: theme.colors.accent,
+    delay: 860,
+    duration: 3100,
+  },
+  {
+    id: "9",
+    x: 0.77,
+    size: 8,
+    color: theme.colors.textPrimary,
+    delay: 140,
+    duration: 2800,
+  },
+  {
+    id: "10",
+    x: 0.86,
+    size: 5,
+    color: theme.colors.teamA,
+    delay: 620,
+    duration: 3500,
+  },
+  {
+    id: "11",
+    x: 0.93,
+    size: 7,
+    color: theme.colors.accent,
+    delay: 470,
+    duration: 3200,
+  },
+  {
+    id: "12",
+    x: 0.08,
+    size: 6,
+    color: theme.colors.teamB,
+    delay: 950,
+    duration: 3000,
+  },
+  {
+    id: "13",
+    x: 0.36,
+    size: 5,
+    color: theme.colors.accent,
+    delay: 250,
+    duration: 3600,
+  },
+  {
+    id: "14",
+    x: 0.54,
+    size: 8,
+    color: theme.colors.teamA,
+    delay: 730,
+    duration: 2900,
+  },
+  {
+    id: "15",
+    x: 0.8,
+    size: 6,
+    color: theme.colors.teamB,
+    delay: 500,
+    duration: 3300,
+  },
 ].map((p) => ({ ...p, left: p.x * W }));
 
 export default function WinnerScreen() {
   const router = useRouter();
-  const { teams, rounds, winnerId, resetGame, undoLastRound } = useGameStore();
+  const { teams, rounds, targetScore, winnerId, resetGame, undoLastRound } =
+    useGameStore();
 
   const confettiAnims = useRef(
-    CONFETTI_PIECES.map(() => new Animated.Value(0))
+    CONFETTI_PIECES.map(() => new Animated.Value(0)),
   ).current;
 
   // Redirigir si no hay ganador
   useEffect(() => {
     if (!winnerId) {
-      router.replace('/');
+      router.replace("/");
     }
   }, []);
 
@@ -89,16 +196,28 @@ export default function WinnerScreen() {
 
   const handleNewGame = () => {
     resetGame();
-    router.replace('/');
+    router.replace("/");
   };
 
   const handleCorrect = () => {
     undoLastRound();
-    router.replace('/game');
+    router.replace("/game");
+  };
+
+  const handleShare = async () => {
+    const message =
+      `🏆 ¡${winner.name} ganó en Dominó Score!\n\n` +
+      `📊 Resultado final:\n` +
+      `${teams[0].name}: ${scoreA} pts\n` +
+      `${teams[1].name}: ${scoreB} pts\n\n` +
+      `🎲 ${rounds.length} ${rounds.length === 1 ? "ronda" : "rondas"} jugadas\n` +
+      `🎯 Meta: ${targetScore} puntos\n\n` +
+      `Jugado con Dominó Score 🁣`;
+    await Share.share({ message });
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       {/* Confetti layer */}
       <View style={styles.confettiLayer} pointerEvents="none">
         {CONFETTI_PIECES.map((piece, i) => {
@@ -131,6 +250,15 @@ export default function WinnerScreen() {
         })}
       </View>
 
+      {/* Botón compartir flotante */}
+      <TouchableOpacity
+        style={styles.floatingShareBtn}
+        onPress={handleShare}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.floatingShareIcon}>📤</Text>
+      </TouchableOpacity>
+
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -148,7 +276,8 @@ export default function WinnerScreen() {
 
         {/* Resumen */}
         <Text style={styles.roundsLabel}>
-          {rounds.length} {rounds.length === 1 ? 'ronda jugada' : 'rondas jugadas'}
+          {rounds.length}{" "}
+          {rounds.length === 1 ? "ronda jugada" : "rondas jugadas"}
         </Text>
 
         {/* Puntajes finales */}
@@ -192,7 +321,7 @@ export default function WinnerScreen() {
 
         <TouchableOpacity
           style={styles.secondaryBtn}
-          onPress={() => router.push('/history')}
+          onPress={() => router.push("/history")}
           activeOpacity={0.8}
         >
           <Text style={styles.secondaryBtnText}>Ver Historial</Text>
@@ -203,7 +332,7 @@ export default function WinnerScreen() {
           onPress={handleCorrect}
           activeOpacity={0.6}
         >
-          <Text style={styles.correctBtnText}>✏️  Corregir puntaje</Text>
+          <Text style={styles.correctBtnText}>✏️ Corregir puntaje</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -222,14 +351,14 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   confettiPiece: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
   },
 
   // Contenido
   scroll: {
     flexGrow: 1,
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: theme.spacing.xl,
     paddingTop: theme.spacing.xxl,
     paddingBottom: theme.spacing.xxl,
@@ -242,19 +371,19 @@ const styles = StyleSheet.create({
   ganadorLabel: {
     color: theme.colors.textPrimary,
     fontSize: theme.fontSize.lg,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: theme.spacing.sm,
   },
   winnerName: {
     fontSize: theme.fontSize.xxl,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: theme.spacing.xs,
   },
   winnerScore: {
     color: theme.colors.accent,
     fontSize: theme.fontSize.xl,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 
   // Separador
@@ -275,9 +404,9 @@ const styles = StyleSheet.create({
 
   // Puntajes
   scoresRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: theme.spacing.md,
-    width: '100%',
+    width: "100%",
     marginBottom: theme.spacing.xxl,
   },
   scoreBox: {
@@ -287,22 +416,22 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: theme.colors.border,
     padding: theme.spacing.md,
-    alignItems: 'center',
+    alignItems: "center",
   },
   scoreBoxWinner: {
     borderColor: theme.colors.accent,
   },
   scoreBoxName: {
     fontSize: theme.fontSize.xs,
-    fontWeight: '700',
-    textTransform: 'uppercase',
+    fontWeight: "700",
+    textTransform: "uppercase",
     letterSpacing: 1,
     marginBottom: theme.spacing.xs,
   },
   scoreBoxValue: {
     color: theme.colors.textSecondary,
     fontSize: theme.fontSize.xl,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   scoreBoxValueWinner: {
     color: theme.colors.textPrimary,
@@ -314,36 +443,60 @@ const styles = StyleSheet.create({
 
   // Botones
   primaryBtn: {
-    width: '100%',
+    width: "100%",
     backgroundColor: theme.colors.accent,
     borderRadius: 12,
     paddingVertical: theme.spacing.lg,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: theme.spacing.md,
   },
   primaryBtnText: {
     color: theme.colors.background,
     fontSize: theme.fontSize.lg,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     letterSpacing: 0.5,
   },
   secondaryBtn: {
-    width: '100%',
+    width: "100%",
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: theme.colors.border,
     paddingVertical: theme.spacing.lg,
-    alignItems: 'center',
+    alignItems: "center",
   },
   secondaryBtnText: {
     color: theme.colors.textSecondary,
     fontSize: theme.fontSize.md,
-    fontWeight: '600',
+    fontWeight: "600",
+  },
+  floatingShareBtn: {
+    position: "absolute",
+    top: 48,
+    right: 20,
+    zIndex: 10,
+    opacity: 0.6,
+  },
+  floatingShareIcon: {
+    fontSize: 22,
+  },
+  shareBtn: {
+    width: "100%",
+    backgroundColor: theme.colors.accent,
+    borderRadius: 12,
+    paddingVertical: theme.spacing.lg,
+    alignItems: "center",
+    marginBottom: theme.spacing.md,
+  },
+  shareBtnText: {
+    color: theme.colors.background,
+    fontSize: theme.fontSize.lg,
+    fontWeight: "bold",
+    letterSpacing: 0.5,
   },
   correctBtn: {
     marginTop: theme.spacing.lg,
     paddingVertical: theme.spacing.sm,
-    alignItems: 'center',
+    alignItems: "center",
   },
   correctBtnText: {
     color: theme.colors.textSecondary,
