@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 export const theme = {
   colors: {
     background: '#0D0D0D',
@@ -30,6 +32,27 @@ export const theme = {
     xl: 28,
     xxl: 40,
   },
+  shadowIOS: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  shadowAndroid: {
+    elevation: 4,
+  },
 } as const;
+
+export const shadow = (elevation = 4) =>
+  Platform.select({
+    ios: {
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: elevation / 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: elevation,
+    },
+    android: { elevation },
+    default: {},
+  });
 
 export type Theme = typeof theme;
