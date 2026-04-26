@@ -7,7 +7,9 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { loadGames } from '../utils/storage';
 import { theme } from '../constants/theme';
 
 const TARGET_OPTIONS = [100, 150, 200, 250, 300] as const;
@@ -18,6 +20,12 @@ export default function HomeScreen() {
 
   const teamA = teams[0];
   const teamB = teams[1];
+
+  const [gameCount, setGameCount] = useState(0);
+
+  useEffect(() => {
+    loadGames().then((g) => setGameCount(g.length));
+  }, []);
 
   const handleStart = () => {
     resetGame();
@@ -96,6 +104,16 @@ export default function HomeScreen() {
       >
         <Text style={styles.startText}>Iniciar Partida</Text>
       </TouchableOpacity>
+
+      <View style={styles.footer}>
+        {gameCount > 0 && (
+          <TouchableOpacity onPress={() => router.push('/history')} activeOpacity={0.7}>
+            <Text style={styles.historyLink}>
+              🎲 {gameCount} {gameCount === 1 ? 'partida jugada' : 'partidas jugadas'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </ScrollView>
   );
 }
@@ -191,5 +209,15 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.lg,
     fontWeight: 'bold',
     letterSpacing: 0.5,
+  },
+  footer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingTop: theme.spacing.xl,
+  },
+  historyLink: {
+    color: theme.colors.textSecondary,
+    fontSize: theme.fontSize.sm,
   },
 });
