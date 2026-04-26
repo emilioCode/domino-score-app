@@ -7,15 +7,123 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { loadGames } from '../utils/storage';
-import { theme } from '../constants/theme';
+import { useTheme } from '../hooks/useTheme';
+import type { Theme } from '../constants/theme';
 
 const TARGET_OPTIONS = [100, 150, 200, 250, 300] as const;
 
+const createStyles = (theme: Theme) =>
+  StyleSheet.create({
+    container: {
+      flexGrow: 1,
+      backgroundColor: theme.colors.background,
+      paddingHorizontal: theme.spacing.xl,
+      paddingTop: theme.spacing.xxl + theme.spacing.lg,
+      paddingBottom: theme.spacing.xxl,
+    },
+    title: {
+      color: theme.colors.accent,
+      fontSize: theme.fontSize.xxl,
+      fontWeight: 'bold',
+      textAlign: 'center',
+      marginBottom: theme.spacing.xs,
+    },
+    subtitle: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.fontSize.md,
+      textAlign: 'center',
+      marginBottom: theme.spacing.xxl,
+    },
+    section: {
+      marginBottom: theme.spacing.xl,
+    },
+    label: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.fontSize.sm,
+      textTransform: 'uppercase',
+      letterSpacing: 1.5,
+      marginBottom: theme.spacing.md,
+    },
+    inputRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      marginBottom: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+    },
+    teamDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      marginRight: theme.spacing.md,
+    },
+    input: {
+      flex: 1,
+      color: theme.colors.textPrimary,
+      fontSize: theme.fontSize.md,
+      paddingVertical: theme.spacing.md,
+    },
+    targetRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: theme.spacing.sm,
+    },
+    targetButton: {
+      flex: 1,
+      paddingVertical: theme.spacing.md,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      backgroundColor: theme.colors.surface,
+      alignItems: 'center',
+    },
+    targetButtonActive: {
+      borderColor: theme.colors.accent,
+      backgroundColor: theme.colors.accent + '20',
+    },
+    targetText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.fontSize.sm,
+      fontWeight: '600',
+    },
+    targetTextActive: {
+      color: theme.colors.accent,
+    },
+    startButton: {
+      marginTop: theme.spacing.xl,
+      backgroundColor: theme.colors.accent,
+      borderRadius: 12,
+      paddingVertical: theme.spacing.lg,
+      alignItems: 'center',
+    },
+    startText: {
+      color: theme.colors.background,
+      fontSize: theme.fontSize.lg,
+      fontWeight: 'bold',
+      letterSpacing: 0.5,
+    },
+    footer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      paddingTop: theme.spacing.xl,
+    },
+    historyLink: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.fontSize.sm,
+    },
+  });
+
 export default function HomeScreen() {
   const router = useRouter();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const { teams, targetScore, setTeamName, setTargetScore, resetGame } = useGameStore();
 
   const teamA = teams[0];
@@ -117,107 +225,3 @@ export default function HomeScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: theme.colors.background,
-    paddingHorizontal: theme.spacing.xl,
-    paddingTop: theme.spacing.xxl + theme.spacing.lg,
-    paddingBottom: theme.spacing.xxl,
-  },
-  title: {
-    color: theme.colors.accent,
-    fontSize: theme.fontSize.xxl,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: theme.spacing.xs,
-  },
-  subtitle: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.fontSize.md,
-    textAlign: 'center',
-    marginBottom: theme.spacing.xxl,
-  },
-  section: {
-    marginBottom: theme.spacing.xl,
-  },
-  label: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.fontSize.sm,
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    marginBottom: theme.spacing.md,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    marginBottom: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-  },
-  teamDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: theme.spacing.md,
-  },
-  input: {
-    flex: 1,
-    color: theme.colors.textPrimary,
-    fontSize: theme.fontSize.md,
-    paddingVertical: theme.spacing.md,
-  },
-  targetRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: theme.spacing.sm,
-  },
-  targetButton: {
-    flex: 1,
-    paddingVertical: theme.spacing.md,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-  },
-  targetButtonActive: {
-    borderColor: theme.colors.accent,
-    backgroundColor: theme.colors.accent + '20',
-  },
-  targetText: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.fontSize.sm,
-    fontWeight: '600',
-  },
-  targetTextActive: {
-    color: theme.colors.accent,
-  },
-  startButton: {
-    marginTop: theme.spacing.xl,
-    backgroundColor: theme.colors.accent,
-    borderRadius: 12,
-    paddingVertical: theme.spacing.lg,
-    alignItems: 'center',
-  },
-  startText: {
-    color: theme.colors.background,
-    fontSize: theme.fontSize.lg,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-  footer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingTop: theme.spacing.xl,
-  },
-  historyLink: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.fontSize.sm,
-  },
-});

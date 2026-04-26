@@ -9,15 +9,248 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useGame } from '@/hooks/useGame';
-import { theme } from '../constants/theme';
+import { useTheme } from '../hooks/useTheme';
 import { POINT_OPTIONS } from '../constants/game';
 import type { Team } from '../types/game.types';
+import type { Theme } from '../constants/theme';
+
+const createStyles = (theme: Theme) =>
+  StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    scroll: {
+      paddingHorizontal: theme.spacing.md,
+      paddingBottom: theme.spacing.xxl,
+    },
+
+    // Header
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: theme.spacing.md,
+      marginBottom: theme.spacing.xs,
+    },
+    headerBtn: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    headerBtnText: {
+      color: theme.colors.accent,
+      fontSize: theme.fontSize.xl,
+    },
+    headerTitle: {
+      color: theme.colors.accent,
+      fontSize: theme.fontSize.lg,
+      fontWeight: 'bold',
+    },
+    dimmed: {
+      opacity: 0.25,
+    },
+
+    // Marcador
+    scoreRow: {
+      flexDirection: 'row',
+      gap: theme.spacing.md,
+      marginBottom: theme.spacing.lg,
+    },
+    scoreCard: {
+      flex: 1,
+      backgroundColor: theme.colors.surface,
+      borderRadius: 14,
+      borderWidth: 1.5,
+      borderColor: theme.colors.border,
+      padding: theme.spacing.md,
+      alignItems: 'center',
+    },
+    scoreCardLeading: {
+      borderColor: theme.colors.accent,
+    },
+    teamName: {
+      fontSize: theme.fontSize.xs,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: theme.spacing.xs,
+    },
+    scoreValue: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.fontSize.xxl,
+      fontWeight: 'bold',
+      lineHeight: theme.fontSize.xxl * 1.15,
+    },
+    metaLabel: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.fontSize.xs,
+      marginBottom: theme.spacing.sm,
+    },
+    progressTrack: {
+      width: '100%',
+      height: 4,
+      backgroundColor: theme.colors.border,
+      borderRadius: 2,
+      overflow: 'hidden',
+    },
+    progressFill: {
+      height: '100%',
+      borderRadius: 2,
+    },
+
+    // Botones de puntos
+    pointsSection: {
+      marginBottom: theme.spacing.md,
+    },
+    pointsLabel: {
+      fontSize: theme.fontSize.xs,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: theme.spacing.sm,
+    },
+    pointsGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: theme.spacing.sm,
+    },
+    pointBtn: {
+      width: '30%',
+      flexGrow: 1,
+      paddingVertical: theme.spacing.md,
+      borderRadius: 10,
+      borderWidth: 1.5,
+      backgroundColor: theme.colors.surface,
+      alignItems: 'center',
+    },
+    pointBtnText: {
+      fontSize: theme.fontSize.md,
+      fontWeight: '700',
+    },
+
+    // Historial
+    history: {
+      marginTop: theme.spacing.sm,
+      backgroundColor: theme.colors.surface,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      overflow: 'hidden',
+    },
+    historyTitle: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.fontSize.xs,
+      textTransform: 'uppercase',
+      letterSpacing: 1.5,
+      paddingHorizontal: theme.spacing.md,
+      paddingTop: theme.spacing.md,
+      paddingBottom: theme.spacing.sm,
+    },
+    historyHeaderRow: {
+      flexDirection: 'row',
+      paddingHorizontal: theme.spacing.md,
+      paddingBottom: theme.spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    historyRow: {
+      flexDirection: 'row',
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: 10,
+    },
+    historyRowAlt: {
+      backgroundColor: theme.colors.background,
+    },
+    historyCell: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.fontSize.sm,
+    },
+    cellIndex: {
+      width: 44,
+      fontWeight: '600',
+    },
+    cellScore: {
+      flex: 1,
+      textAlign: 'center',
+      fontWeight: '700',
+    },
+
+    // Edición inline
+    historyRowEditing: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      backgroundColor: theme.colors.background,
+      gap: theme.spacing.xs,
+    },
+    editInput: {
+      flex: 1,
+      height: 34,
+      borderWidth: 1.5,
+      borderRadius: 6,
+      backgroundColor: theme.colors.surface,
+      color: theme.colors.textPrimary,
+      fontSize: theme.fontSize.sm,
+      textAlign: 'center',
+      paddingHorizontal: theme.spacing.xs,
+    },
+    editActionBtn: {
+      width: 32,
+      height: 34,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    editConfirm: {
+      color: theme.colors.success,
+      fontSize: theme.fontSize.md,
+      fontWeight: '700',
+    },
+    editCancel: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.fontSize.md,
+      fontWeight: '700',
+    },
+
+    // Input personalizado
+    customRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: theme.spacing.sm,
+      borderWidth: 1.5,
+      borderRadius: 10,
+      backgroundColor: theme.colors.surface,
+      overflow: 'hidden',
+    },
+    customInput: {
+      flex: 1,
+      color: theme.colors.textPrimary,
+      fontSize: theme.fontSize.md,
+      paddingVertical: theme.spacing.md,
+      paddingHorizontal: theme.spacing.md,
+    },
+    customBtn: {
+      paddingVertical: theme.spacing.md,
+      paddingHorizontal: theme.spacing.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    customBtnText: {
+      color: theme.colors.background,
+      fontSize: theme.fontSize.lg,
+      fontWeight: 'bold',
+    },
+  });
 
 export default function GameScreen() {
   const router = useRouter();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const { teams, rounds, targetScore, isFinished } = useGameStore();
   const { addPoints, undoLastRound, updateRound } = useGame();
 
@@ -326,233 +559,3 @@ export default function GameScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  scroll: {
-    paddingHorizontal: theme.spacing.md,
-    paddingBottom: theme.spacing.xxl,
-  },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: theme.spacing.md,
-    marginBottom: theme.spacing.xs,
-  },
-  headerBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerBtnText: {
-    color: theme.colors.accent,
-    fontSize: theme.fontSize.xl,
-  },
-  headerTitle: {
-    color: theme.colors.accent,
-    fontSize: theme.fontSize.lg,
-    fontWeight: 'bold',
-  },
-  dimmed: {
-    opacity: 0.25,
-  },
-
-  // Marcador
-  scoreRow: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
-  },
-  scoreCard: {
-    flex: 1,
-    backgroundColor: theme.colors.surface,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: theme.colors.border,
-    padding: theme.spacing.md,
-    alignItems: 'center',
-  },
-  scoreCardLeading: {
-    borderColor: theme.colors.accent,
-  },
-  teamName: {
-    fontSize: theme.fontSize.xs,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: theme.spacing.xs,
-  },
-  scoreValue: {
-    color: theme.colors.textPrimary,
-    fontSize: theme.fontSize.xxl,
-    fontWeight: 'bold',
-    lineHeight: theme.fontSize.xxl * 1.15,
-  },
-  metaLabel: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.fontSize.xs,
-    marginBottom: theme.spacing.sm,
-  },
-  progressTrack: {
-    width: '100%',
-    height: 4,
-    backgroundColor: theme.colors.border,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-
-  // Botones de puntos
-  pointsSection: {
-    marginBottom: theme.spacing.md,
-  },
-  pointsLabel: {
-    fontSize: theme.fontSize.xs,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: theme.spacing.sm,
-  },
-  pointsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-  },
-  pointBtn: {
-    // 3 por fila: (100% - 2 gaps de 8) / 3
-    width: '30%',
-    flexGrow: 1,
-    paddingVertical: theme.spacing.md,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-  },
-  pointBtnText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: '700',
-  },
-
-  // Historial
-  history: {
-    marginTop: theme.spacing.sm,
-    backgroundColor: theme.colors.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    overflow: 'hidden',
-  },
-  historyTitle: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.fontSize.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.sm,
-  },
-  historyHeaderRow: {
-    flexDirection: 'row',
-    paddingHorizontal: theme.spacing.md,
-    paddingBottom: theme.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  historyRow: {
-    flexDirection: 'row',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: 10,
-  },
-  historyRowAlt: {
-    backgroundColor: theme.colors.background,
-  },
-  historyCell: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.fontSize.sm,
-  },
-  cellIndex: {
-    width: 44,
-    fontWeight: '600',
-  },
-  cellScore: {
-    flex: 1,
-    textAlign: 'center',
-    fontWeight: '700',
-  },
-
-  // Edición inline
-  historyRowEditing: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    backgroundColor: theme.colors.background,
-    gap: theme.spacing.xs,
-  },
-  editInput: {
-    flex: 1,
-    height: 34,
-    borderWidth: 1.5,
-    borderRadius: 6,
-    backgroundColor: theme.colors.surface,
-    color: theme.colors.textPrimary,
-    fontSize: theme.fontSize.sm,
-    textAlign: 'center',
-    paddingHorizontal: theme.spacing.xs,
-  },
-  editActionBtn: {
-    width: 32,
-    height: 34,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  editConfirm: {
-    color: theme.colors.success,
-    fontSize: theme.fontSize.md,
-    fontWeight: '700',
-  },
-  editCancel: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.fontSize.md,
-    fontWeight: '700',
-  },
-
-  // Input personalizado
-  customRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: theme.spacing.sm,
-    borderWidth: 1.5,
-    borderRadius: 10,
-    backgroundColor: theme.colors.surface,
-    overflow: 'hidden',
-  },
-  customInput: {
-    flex: 1,
-    color: theme.colors.textPrimary,
-    fontSize: theme.fontSize.md,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
-  },
-  customBtn: {
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  customBtnText: {
-    color: theme.colors.background,
-    fontSize: theme.fontSize.lg,
-    fontWeight: 'bold',
-  },
-});

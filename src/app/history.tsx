@@ -10,9 +10,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { loadGames, deleteGame, clearAllGames } from '../utils/storage';
-import { theme } from '../constants/theme';
+import { useTheme } from '../hooks/useTheme';
+import type { Theme } from '../constants/theme';
 import type { SavedGame } from '../types/game.types';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -35,6 +36,126 @@ const formatDuration = (ms: number): string => {
   return mins < 1 ? '< 1 min' : `${mins} min`;
 };
 
+// ── Styles ────────────────────────────────────────────────────────────────────
+
+const createStyles = (theme: Theme) =>
+  StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    headerBtn: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    headerBtnText: {
+      color: theme.colors.accent,
+      fontSize: theme.fontSize.xl,
+    },
+    headerTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.fontSize.lg,
+      fontWeight: 'bold',
+    },
+    dimmed: {
+      opacity: 0.25,
+    },
+    list: {
+      padding: theme.spacing.md,
+      flexGrow: 1,
+    },
+    cardWrapper: {
+      marginBottom: theme.spacing.md,
+      borderRadius: 14,
+      overflow: 'hidden',
+    },
+    deleteBackground: {
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      bottom: 0,
+      width: 80,
+      backgroundColor: theme.colors.teamA,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    deleteIcon: {
+      fontSize: 22,
+    },
+    card: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      padding: theme.spacing.md,
+    },
+    cardTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: theme.spacing.sm,
+    },
+    winnerLabel: {
+      fontSize: theme.fontSize.md,
+      fontWeight: '700',
+      flex: 1,
+      marginRight: theme.spacing.sm,
+    },
+    dateText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.fontSize.xs,
+    },
+    cardBottom: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    scoreRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+    },
+    scoreNum: {
+      fontSize: theme.fontSize.xl,
+      fontWeight: 'bold',
+    },
+    scoreDash: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.fontSize.lg,
+    },
+    metaText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.fontSize.xs,
+      textAlign: 'right',
+    },
+    empty: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingTop: 80,
+    },
+    emptyIcon: {
+      fontSize: 48,
+      marginBottom: theme.spacing.md,
+    },
+    emptyText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.fontSize.md,
+      textAlign: 'center',
+    },
+  });
+
 // ── GameCard ──────────────────────────────────────────────────────────────────
 
 const SWIPE_THRESHOLD = -80;
@@ -42,6 +163,8 @@ const SWIPE_THRESHOLD = -80;
 type CardProps = { game: SavedGame; onDelete: () => void };
 
 function GameCard({ game, onDelete }: CardProps) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const translateX = useRef(new Animated.Value(0)).current;
 
   const scoreA = game.rounds.reduce((acc, r) => acc + r.teamAPoints, 0);
@@ -126,6 +249,8 @@ function GameCard({ game, onDelete }: CardProps) {
 
 export default function HistoryScreen() {
   const router = useRouter();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [games, setGames] = useState<SavedGame[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -209,132 +334,3 @@ export default function HistoryScreen() {
     </SafeAreaView>
   );
 }
-
-// ── Styles ────────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  headerBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerBtnText: {
-    color: theme.colors.accent,
-    fontSize: theme.fontSize.xl,
-  },
-  headerTitle: {
-    color: theme.colors.textPrimary,
-    fontSize: theme.fontSize.lg,
-    fontWeight: 'bold',
-  },
-  dimmed: {
-    opacity: 0.25,
-  },
-
-  // List
-  list: {
-    padding: theme.spacing.md,
-    flexGrow: 1,
-  },
-
-  // Card wrapper + delete background
-  cardWrapper: {
-    marginBottom: theme.spacing.md,
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  deleteBackground: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: 80,
-    backgroundColor: theme.colors.teamA,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  deleteIcon: {
-    fontSize: 22,
-  },
-
-  // Card
-  card: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    padding: theme.spacing.md,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  winnerLabel: {
-    fontSize: theme.fontSize.md,
-    fontWeight: '700',
-    flex: 1,
-    marginRight: theme.spacing.sm,
-  },
-  dateText: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.fontSize.xs,
-  },
-  cardBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  scoreRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  scoreNum: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: 'bold',
-  },
-  scoreDash: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.fontSize.lg,
-  },
-  metaText: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.fontSize.xs,
-    textAlign: 'right',
-  },
-
-  // Empty state
-  empty: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 80,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: theme.spacing.md,
-  },
-  emptyText: {
-    color: theme.colors.textSecondary,
-    fontSize: theme.fontSize.md,
-    textAlign: 'center',
-  },
-});
