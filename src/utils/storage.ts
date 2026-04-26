@@ -1,11 +1,47 @@
-import type { GameState } from '../types/game.types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { GameState, SavedGame } from '../types/game.types';
 
-export const saveGame = async (_game: GameState): Promise<void> => {};
+const HISTORY_KEY = 'domino_history';
+const MAX_GAMES = 50;
 
-export const loadGame = async (): Promise<GameState | null> => null;
+export const saveGame = async (state: GameState): Promise<void> => {
+  if (!state.winnerId || state.rounds.length === 0) return;
 
-export const clearGame = async (): Promise<void> => {};
+  const winner = state.teams.find((t) => t.id === state.winnerId);
+  if (!winner) return;
 
-export const saveGameHistory = async (_games: GameState[]): Promise<void> => {};
+  const first = state.rounds[0].timestamp;
+  const last = state.rounds[state.rounds.length - 1].timestamp;
+  const duration = last - first;
 
-export const loadGameHistory = async (): Promise<GameState[]> => [];
+  const entry: SavedGame = {
+    id: `game-${Date.now()}`,
+    date: Date.now(),
+    winner,
+    teams: state.teams,
+    rounds: state.rounds,
+    targetScore: state.targetScore,
+    duration,
+  };
+
+  const existing = await loadGames();
+  const updated = [entry, ...existing].slice(0, MAX_GAMES);
+  await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+};
+
+export const loadGames = async (): Promise<SavedGame[]> => {
+  const raw = await AsyncStorage.getItem(HISTORY_KEY);
+  return raw ? (JSON.parse(raw) as SavedGame[]) : [];
+};
+
+export const deleteGame = async (id: string): Promise<void> => {
+  const games = await loadGames();
+  await AsyncStorage.setItem(
+    HISTORY_KEY,
+    JSON.stringify(games.filter((g) => g.id !== id))
+  );
+};
+
+export const clearAllGames = async (): Promise<void> => {
+  await AsyncStorage.removeItem(HISTORY_KEY);
+};

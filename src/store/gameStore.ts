@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { GameState, Team, Round } from '../types/game.types';
 import { DEFAULT_TARGET_SCORE } from '../constants/game';
 import { theme } from '../constants/theme';
+import { saveGame } from '../utils/storage';
 
 const INITIAL_TEAMS: [Team, Team] = [
   { id: 'team-a', name: 'Equipo A', color: theme.colors.teamA },
@@ -72,14 +73,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return { rounds, isFinished: winnerId !== null, winnerId };
     }),
 
-  resetGame: () =>
-    set((s) => ({
+  resetGame: () => {
+    const s = get();
+    if (s.winnerId && s.rounds.length > 0) {
+      saveGame(s); // fire-and-forget: persiste antes de limpiar
+    }
+    set((_s) => ({
       rounds: [],
       isFinished: false,
       winnerId: null,
-      teams: s.teams,
-      targetScore: s.targetScore,
-    })),
+      teams: _s.teams,
+      targetScore: _s.targetScore,
+    }));
+  },
 
   checkWinner: () => {
     const { teams, rounds, targetScore } = get();

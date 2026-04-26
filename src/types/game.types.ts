@@ -18,3 +18,13 @@ export interface GameState {
   isFinished: boolean;
   winnerId: string | null;
 }
+
+export interface SavedGame {
+  id: string;
+  date: number;
+  winner: Team;
+  teams: [Team, Team];
+  rounds: Round[];
+  targetScore: number;
+  duration: number;
+}
