@@ -23,6 +23,7 @@ interface GameActions {
   addPoints: (teamId: string, points: number) => void;
   undoLastRound: () => void;
   resetGame: () => void;
+  discardGame: () => void;
   checkWinner: () => Team | null;
   updateRound: (roundId: string, teamAPoints: number, teamBPoints: number) => void;
 }
@@ -86,6 +87,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
       targetScore: _s.targetScore,
     }));
   },
+
+  discardGame: () =>
+    set((_s) => ({
+      rounds: [],
+      isFinished: false,
+      winnerId: null,
+      teams: _s.teams,
+      targetScore: _s.targetScore,
+    })),
 
   checkWinner: () => {
     const { teams, rounds, targetScore } = get();

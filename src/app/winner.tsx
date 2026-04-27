@@ -7,6 +7,7 @@ import {
   Dimensions,
   ScrollView,
   Share,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -182,7 +183,7 @@ export default function WinnerScreen() {
   const router = useRouter();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const { teams, rounds, targetScore, winnerId, resetGame, undoLastRound } =
+  const { teams, rounds, targetScore, winnerId, resetGame, discardGame, undoLastRound } =
     useGameStore();
 
   const confettiAnims = useRef(
@@ -235,8 +236,27 @@ export default function WinnerScreen() {
   const winnerScore = winner.id === teams[0].id ? scoreA : scoreB;
 
   const handleNewGame = () => {
-    resetGame();
-    router.replace("/");
+    Alert.alert(
+      '¿Guardar partida?',
+      '¿Deseas guardar este resultado en el historial?',
+      [
+        {
+          text: 'No guardar',
+          style: 'destructive',
+          onPress: () => {
+            discardGame();
+            router.replace('/');
+          },
+        },
+        {
+          text: 'Guardar',
+          onPress: () => {
+            resetGame();
+            router.replace('/');
+          },
+        },
+      ]
+    );
   };
 
   const handleCorrect = () => {
