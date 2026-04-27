@@ -28,13 +28,18 @@ interface GameActions {
   updateRound: (roundId: string, teamAPoints: number, teamBPoints: number) => void;
 }
 
-export type GameStore = GameState & GameActions;
+interface GameExtra {
+  lastSavedAt: number | null;
+}
+
+export type GameStore = GameState & GameActions & GameExtra;
 
 const sumScore = (rounds: Round[], field: 'teamAPoints' | 'teamBPoints') =>
   rounds.reduce((acc, r) => acc + r[field], 0);
 
 export const useGameStore = create<GameStore>((set, get) => ({
   ...INITIAL_GAME,
+  lastSavedAt: null,
 
   setTeamName: (teamId, name) =>
     set((s) => ({
@@ -76,8 +81,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   resetGame: () => {
     const s = get();
-    if (s.winnerId && s.rounds.length > 0) {
-      saveGame(s); // fire-and-forget: persiste antes de limpiar
+    const didSave = s.winnerId !== null && s.rounds.length > 0;
+    if (didSave) {
+      saveGame(s); // fire-and-forget
     }
     set((_s) => ({
       rounds: [],
@@ -85,6 +91,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       winnerId: null,
       teams: _s.teams,
       targetScore: _s.targetScore,
+      lastSavedAt: didSave ? Date.now() : _s.lastSavedAt,
     }));
   },
 
