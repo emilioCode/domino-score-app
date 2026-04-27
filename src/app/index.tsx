@@ -6,8 +6,8 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useState, useEffect, useMemo } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { useState, useCallback, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { loadGames } from '../utils/storage';
 import { useTheme } from '../hooks/useTheme';
@@ -131,9 +131,11 @@ export default function HomeScreen() {
 
   const [gameCount, setGameCount] = useState(0);
 
-  useEffect(() => {
-    loadGames().then((g) => setGameCount(g.length));
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadGames().then((g) => setGameCount(g.length));
+    }, [])
+  );
 
   const handleStart = () => {
     resetGame();
