@@ -458,9 +458,13 @@ export default function GameScreen() {
               </Text>
             </View>
 
+            <ScrollView
+              style={{ maxHeight: 220 }}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled
+            >
             {[...rounds]
               .reverse()
-              .slice(0, 5)
               .map((round, idx) => {
                 const roundNum = rounds.length - idx;
                 const isEditing = editingId === round.id;
@@ -553,6 +557,7 @@ export default function GameScreen() {
                   </TouchableOpacity>
                 );
               })}
+            </ScrollView>
           </View>
         )}
       </ScrollView>
