@@ -10,10 +10,11 @@ import {
   Modal,
   ScrollView,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { loadGames, deleteGame, clearAllGames } from '../utils/storage';
+import { useState, useRef, useCallback, useMemo } from 'react';
+import { deleteGame, clearAllGames } from '../utils/storage';
+import { useHistoryStore } from '../store/historyStore';
 import { useTheme } from '../hooks/useTheme';
 import type { Theme } from '../constants/theme';
 import type { SavedGame } from '../types/game.types';
@@ -440,16 +441,15 @@ export default function HistoryScreen() {
   const router = useRouter();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const [games, setGames] = useState<SavedGame[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { games, load } = useHistoryStore();
   const [selectedGame, setSelectedGame] = useState<SavedGame | null>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    loadGames()
-      .then(setGames)
-      .finally(() => setLoading(false));
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
 
   const openModal = useCallback((game: SavedGame) => {
     setSelectedGame(game);
@@ -467,8 +467,8 @@ export default function HistoryScreen() {
 
   const handleDelete = useCallback(async (id: string) => {
     await deleteGame(id);
-    setGames((prev) => prev.filter((g) => g.id !== id));
-  }, []);
+    load();
+  }, [load]);
 
   const handleDeleteFromModal = useCallback(() => {
     if (!selectedGame) return;
@@ -482,13 +482,13 @@ export default function HistoryScreen() {
           style: 'destructive',
           onPress: async () => {
             await deleteGame(selectedGame.id);
-            setGames((prev) => prev.filter((g) => g.id !== selectedGame.id));
+            load();
             closeModal();
           },
         },
       ]
     );
-  }, [selectedGame, closeModal]);
+  }, [selectedGame, closeModal, load]);
 
   const handleClearAll = () => {
     Alert.alert(
@@ -501,7 +501,7 @@ export default function HistoryScreen() {
           style: 'destructive',
           onPress: async () => {
             await clearAllGames();
-            setGames([]);
+            load();
           },
         },
       ]
@@ -560,7 +560,7 @@ export default function HistoryScreen() {
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={!loading ? EmptyState : null}
+        ListEmptyComponent={EmptyState}
         showsVerticalScrollIndicator={false}
       />
 

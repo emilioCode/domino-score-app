@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useRef, useMemo } from "react";
 import * as Haptics from 'expo-haptics';
 import { useGameStore } from "../store/gameStore";
+import { useHistoryStore } from "../store/historyStore";
 import { useTheme } from "../hooks/useTheme";
 import type { Theme } from "../constants/theme";
 
@@ -250,8 +251,9 @@ export default function WinnerScreen() {
         },
         {
           text: 'Guardar',
-          onPress: () => {
+          onPress: async () => {
             resetGame();
+            await useHistoryStore.getState().load();
             router.replace('/');
           },
         },

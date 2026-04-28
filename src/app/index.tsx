@@ -8,13 +8,12 @@ import {
   Modal,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useSettingsStore } from '../store/settingsStore';
-import { loadGames } from '../utils/storage';
+import { useHistoryStore } from '../store/historyStore';
 import { useTheme } from '../hooks/useTheme';
 import type { Theme } from '../constants/theme';
-import type { SavedGame } from '../types/game.types';
 
 const TARGET_OPTIONS = [100, 150, 200, 250, 300] as const;
 
@@ -214,22 +213,13 @@ export default function HomeScreen() {
   const teamA = teams[0];
   const teamB = teams[1];
 
-  const [savedGames, setSavedGames] = useState<SavedGame[]>([]);
+  const { games, load } = useHistoryStore();
   const [settingsVisible, setSettingsVisible] = useState(false);
-  const lastSavedAt = useGameStore((s) => s.lastSavedAt);
 
-  // Se dispara cuando winner.tsx llama resetGame() y guarda la partida
-  useEffect(() => {
-    if (lastSavedAt) {
-      loadGames().then(setSavedGames);
-    }
-  }, [lastSavedAt]);
-
-  // Respaldo: recarga al recuperar el foco (navegación back, etc.)
   useFocusEffect(
     useCallback(() => {
-      loadGames().then((games) => setSavedGames(games));
-    }, [])
+      load();
+    }, [load])
   );
 
   const handleStart = () => {
@@ -312,10 +302,10 @@ export default function HomeScreen() {
         </TouchableOpacity>
 
         <View style={styles.footer}>
-          {savedGames.length > 0 && (
+          {games.length > 0 && (
             <TouchableOpacity onPress={() => router.push('/history')} activeOpacity={0.7}>
               <Text style={styles.historyLink}>
-                {`🎲 ${savedGames.length} partidas jugadas`}
+                {`🎲 ${games.length} partidas jugadas`}
               </Text>
             </TouchableOpacity>
           )}
