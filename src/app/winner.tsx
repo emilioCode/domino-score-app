@@ -15,6 +15,7 @@ import { useEffect, useRef, useMemo } from "react";
 import * as Haptics from 'expo-haptics';
 import { useGameStore } from "../store/gameStore";
 import { useHistoryStore } from "../store/historyStore";
+import { useInterstitialAd } from "@/components/ads/InterstitialAd";
 import { useTheme } from "../hooks/useTheme";
 import type { Theme } from "../constants/theme";
 
@@ -190,6 +191,8 @@ export default function WinnerScreen() {
   const confettiAnims = useRef(
     CONFETTI_PIECES.map(() => new Animated.Value(0)),
   ).current;
+
+  useInterstitialAd();
 
   useEffect(() => {
     if (!winnerId) {

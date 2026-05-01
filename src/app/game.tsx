@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useGame } from '@/hooks/useGame';
+import BannerAdComponent from '@/components/ads/BannerAd';
 import { useTheme } from '../hooks/useTheme';
 import { POINT_OPTIONS } from '../constants/game';
 import type { Team } from '../types/game.types';
@@ -561,6 +562,7 @@ export default function GameScreen() {
           </View>
         )}
       </ScrollView>
+      <BannerAdComponent />
     </SafeAreaView>
   );
 }
