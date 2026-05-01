@@ -11,7 +11,7 @@ interface SettingsState {
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
-  colorScheme: 'system',
+  colorScheme: 'dark',
   setColorScheme: (scheme) => {
     set({ colorScheme: scheme });
     AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify({ colorScheme: scheme }));
