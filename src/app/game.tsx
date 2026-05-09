@@ -6,10 +6,11 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useGame } from '@/hooks/useGame';
 import BannerAdComponent from '@/components/ads/BannerAd';
@@ -86,6 +87,15 @@ const createStyles = (theme: Theme) =>
       fontSize: theme.fontSize.xxl,
       fontWeight: 'bold',
       lineHeight: theme.fontSize.xxl * 1.15,
+    },
+    scoreWrapper: {
+      alignItems: 'center',
+      overflow: 'visible',
+    },
+    floatPoints: {
+      position: 'absolute',
+      fontSize: 28,
+      fontWeight: 'bold',
     },
     metaLabel: {
       color: theme.colors.textSecondary,
@@ -277,6 +287,39 @@ export default function GameScreen() {
 
   const scoreOf = (team: Team) => (team.id === teamA.id ? scoreA : scoreB);
 
+  // ── Animaciones de puntos ──────────────────────────────────────────────────
+  const scaleA = useRef(new Animated.Value(1)).current;
+  const scaleB = useRef(new Animated.Value(1)).current;
+  const floatOpacityA = useRef(new Animated.Value(0)).current;
+  const floatOpacityB = useRef(new Animated.Value(0)).current;
+  const floatTranslateA = useRef(new Animated.Value(0)).current;
+  const floatTranslateB = useRef(new Animated.Value(0)).current;
+  const [floatTextA, setFloatTextA] = useState('');
+  const [floatTextB, setFloatTextB] = useState('');
+
+  const handleAddPoints = (teamId: string, points: number) => {
+    addPoints(teamId, points);
+    const isA = teamId === teamA.id;
+    const scale = isA ? scaleA : scaleB;
+    const floatOpacity = isA ? floatOpacityA : floatOpacityB;
+    const floatTranslate = isA ? floatTranslateA : floatTranslateB;
+    const setFloatText = isA ? setFloatTextA : setFloatTextB;
+
+    setFloatText(`+${points}`);
+    scale.setValue(1);
+    floatOpacity.setValue(1);
+    floatTranslate.setValue(0);
+
+    Animated.parallel([
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1.3, duration: 150, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1,   duration: 150, useNativeDriver: true }),
+      ]),
+      Animated.timing(floatTranslate, { toValue: -60, duration: 800, useNativeDriver: true }),
+      Animated.timing(floatOpacity,   { toValue: 0,   duration: 800, useNativeDriver: true }),
+    ]).start();
+  };
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editA, setEditA] = useState('');
   const [editB, setEditB] = useState('');
@@ -309,7 +352,7 @@ export default function GameScreen() {
   const handleCustomPoints = (teamId: string) => {
     const val = parseInt(getCustom(teamId), 10);
     if (!val || val <= 0) return;
-    addPoints(teamId, val);
+    handleAddPoints(teamId, val);
     setTeamCustom(teamId, '');
   };
 
@@ -367,7 +410,28 @@ export default function GameScreen() {
                   {team.name}
                 </Text>
 
-                <Text style={styles.scoreValue}>{score}</Text>
+                <View style={styles.scoreWrapper}>
+                  <Animated.Text
+                    style={[
+                      styles.scoreValue,
+                      { transform: [{ scale: team.id === teamA.id ? scaleA : scaleB }] },
+                    ]}
+                  >
+                    {score}
+                  </Animated.Text>
+                  <Animated.Text
+                    style={[
+                      styles.floatPoints,
+                      {
+                        color: team.color,
+                        opacity: team.id === teamA.id ? floatOpacityA : floatOpacityB,
+                        transform: [{ translateY: team.id === teamA.id ? floatTranslateA : floatTranslateB }],
+                      },
+                    ]}
+                  >
+                    {team.id === teamA.id ? floatTextA : floatTextB}
+                  </Animated.Text>
+                </View>
                 <Text style={styles.metaLabel}>/ {targetScore}</Text>
 
                 <View style={styles.progressTrack}>
@@ -397,7 +461,7 @@ export default function GameScreen() {
                 <TouchableOpacity
                   key={pts}
                   style={[styles.pointBtn, { borderColor: team.color }]}
-                  onPress={() => addPoints(team.id, pts)}
+                  onPress={() => handleAddPoints(team.id, pts)}
                   activeOpacity={0.65}
                 >
                   <Text style={[styles.pointBtnText, { color: team.color }]}>
