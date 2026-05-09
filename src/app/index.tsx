@@ -12,8 +12,11 @@ import { useState, useCallback, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useHistoryStore } from '../store/historyStore';
+import Constants from 'expo-constants';
 import { useTheme } from '../hooks/useTheme';
 import type { Theme } from '../constants/theme';
+
+const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
 const TARGET_OPTIONS = [100, 150, 200, 250, 300] as const;
 
@@ -140,6 +143,11 @@ const createStyles = (theme: Theme) =>
     historyLink: {
       color: theme.colors.textSecondary,
       fontSize: theme.fontSize.sm,
+    },
+    versionText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.fontSize.xs,
+      marginTop: theme.spacing.sm,
     },
 
     // Settings modal
@@ -309,6 +317,7 @@ export default function HomeScreen() {
               </Text>
             </TouchableOpacity>
           )}
+          <Text style={styles.versionText}>v{APP_VERSION}</Text>
         </View>
       </ScrollView>
 
