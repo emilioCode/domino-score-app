@@ -1,16 +1,17 @@
 import { useEffect } from 'react';
-import {
-  InterstitialAd,
-  AdEventType,
-  TestIds,
-} from 'react-native-google-mobile-ads';
-
-const adUnitId = __DEV__
-  ? TestIds.INTERSTITIAL
-  : (process.env.EXPO_PUBLIC_ADMOB_ANDROID_INTERSTITIAL ?? TestIds.INTERSTITIAL);
 
 export function useInterstitialAd() {
   useEffect(() => {
+    if (__DEV__) return;
+
+    const {
+      InterstitialAd,
+      AdEventType,
+      TestIds,
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    } = require('react-native-google-mobile-ads');
+
+    const adUnitId = process.env.EXPO_PUBLIC_ADMOB_ANDROID_INTERSTITIAL ?? TestIds.INTERSTITIAL;
     const instance = InterstitialAd.createForAdRequest(adUnitId);
     let expired = false;
 
