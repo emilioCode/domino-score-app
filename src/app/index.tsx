@@ -8,10 +8,11 @@ import {
   Modal,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useHistoryStore } from '../store/historyStore';
+import { loadTeamNames, saveTeamNames } from '../utils/storage';
 import Constants from 'expo-constants';
 import { useTheme } from '../hooks/useTheme';
 import type { Theme } from '../constants/theme';
@@ -224,6 +225,15 @@ export default function HomeScreen() {
   const { games, load } = useHistoryStore();
   const [settingsVisible, setSettingsVisible] = useState(false);
 
+  useEffect(() => {
+    loadTeamNames().then((saved) => {
+      if (saved) {
+        setTeamName(teamA.id, saved.nameA);
+        setTeamName(teamB.id, saved.nameB);
+      }
+    });
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       load();
@@ -231,6 +241,9 @@ export default function HomeScreen() {
   );
 
   const handleStart = () => {
+    const nameA = teamA.name.trim() || 'Equipo A';
+    const nameB = teamB.name.trim() || 'Equipo B';
+    saveTeamNames(nameA, nameB);
     resetGame();
     router.push('/game');
   };

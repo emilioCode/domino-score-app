@@ -45,3 +45,19 @@ export const deleteGame = async (id: string): Promise<void> => {
 export const clearAllGames = async (): Promise<void> => {
   await AsyncStorage.removeItem(HISTORY_KEY);
 };
+
+const TEAM_NAMES_KEY = '@team_names';
+
+export const saveTeamNames = async (nameA: string, nameB: string): Promise<void> => {
+  await AsyncStorage.setItem(TEAM_NAMES_KEY, JSON.stringify({ nameA, nameB }));
+};
+
+export const loadTeamNames = async (): Promise<{ nameA: string; nameB: string } | null> => {
+  const raw = await AsyncStorage.getItem(TEAM_NAMES_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as { nameA: string; nameB: string };
+  } catch {
+    return null;
+  }
+};
