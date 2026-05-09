@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { deleteGame, clearAllGames } from '../utils/storage';
 import { useHistoryStore } from '../store/historyStore';
+import BannerAdComponent from '@/components/ads/BannerAd';
 import { useTheme } from '../hooks/useTheme';
 import type { Theme } from '../constants/theme';
 import type { SavedGame } from '../types/game.types';
@@ -727,6 +728,7 @@ export default function HistoryScreen() {
           </View>
         </Animated.View>
       </Modal>
+      <BannerAdComponent />
     </SafeAreaView>
   );
 }
