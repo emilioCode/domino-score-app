@@ -207,13 +207,4 @@ npx expo build:ios
 
 ## 📄 License
 
-MIT © [AGT Agencia Tecnológica](https://agt.com)
-
----
-
-## 👨‍💻 Developed by
-
-<p align="center">
-  <strong>AGT Agencia Tecnológica</strong><br/>
-  <a href="https://agt.com">🌐 agt.com</a>
-</p>
+MIT
