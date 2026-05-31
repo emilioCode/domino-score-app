@@ -254,7 +254,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>🁣 Dominó Score</Text>
+        <Text style={styles.title}>🁣 Domino Score</Text>
         <Text style={styles.subtitle}>Configura la partida</Text>
 
         {/* Team inputs */}

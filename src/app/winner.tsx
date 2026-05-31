@@ -271,13 +271,13 @@ export default function WinnerScreen() {
 
   const handleShare = async () => {
     const message =
-      `🏆 ¡${winner.name} ganó en Dominó Score!\n\n` +
+      `🏆 ¡${winner.name} ganó en Domino Score!\n\n` +
       `📊 Resultado final:\n` +
       `${teams[0].name}: ${scoreA} pts\n` +
       `${teams[1].name}: ${scoreB} pts\n\n` +
       `🎲 ${rounds.length} ${rounds.length === 1 ? "ronda" : "rondas"} jugadas\n` +
       `🎯 Meta: ${targetScore} puntos\n\n` +
-      `Jugado con Dominó Score 🁣`;
+      `Jugado con Domino Score 🁣`;
     await Share.share({ message });
   };
 

@@ -372,7 +372,7 @@ export default function GameScreen() {
             <Text style={styles.headerBtnText}>←</Text>
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Dominó Score</Text>
+          <Text style={styles.headerTitle}>Domino Score</Text>
 
           <TouchableOpacity
             onPress={undoLastRound}
